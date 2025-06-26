@@ -26,6 +26,8 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime)                
 
 class LogAktivitas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,7 +61,7 @@ def inject_user():
 # ========== ROUTES ==========
 @app.route("/")
 def home():
-    notes = Note.query.all()
+    notes = Note.query.filter_by(is_deleted=False).all()
     return render_template("view.html", notes=notes)
 
 @app.route("/add", methods=["GET", "POST"])
@@ -93,11 +95,60 @@ def update_note(id):
 @app.route("/delete/<int:id>")
 def delete_note(id):
     note = Note.query.get_or_404(id)
-    db.session.delete(note)
+    note.is_deleted = True
+    note.deleted_at = datetime.utcnow()
     db.session.commit()
-    catat_log(f"Menghapus catatan ID: {id}")
-    flash("Catatan berhasil dihapus.")
+    catat_log(f"Soft delete catatan ID: {id}")
+    flash("Catatan dipindahkan ke Recently Deleted.")
     return redirect("/")
+
+@app.route("/recently-deleted")
+def recently_deleted():
+    notes = Note.query.filter_by(is_deleted=True).all()
+    return render_template("deleted.html", notes=notes)
+
+@app.route("/restore/<int:id>")
+def restore_note(id):
+    note = Note.query.get_or_404(id)
+    if note.is_deleted:
+        note.is_deleted = False
+        note.deleted_at = None
+        db.session.commit()
+        catat_log(f"Restore catatan ID: {id}")
+        flash("Catatan berhasil dikembalikan.")
+    return redirect("/recently-deleted")
+
+@app.route("/delete-permanent/<int:id>")
+def delete_permanent(id):
+    note = Note.query.get_or_404(id)
+    if note.is_deleted:
+        db.session.delete(note)
+        db.session.commit()
+        flash("Catatan berhasil dihapus secara permanen.")
+    else:
+        flash("Catatan belum dipindahkan ke Recently Deleted.")
+    return redirect("/recently-deleted")
+
+@app.route("/restore-all")
+def restore_all():
+    notes = Note.query.filter_by(is_deleted=True).all()
+    for note in notes:
+        note.is_deleted = False
+        note.deleted_at = None
+    db.session.commit()
+    catat_log("Restore semua catatan yang dihapus")
+    flash("Semua catatan berhasil dikembalikan.")
+    return redirect("/recently-deleted")
+
+@app.route("/delete-permanent-all")
+def delete_permanent_all():
+    notes = Note.query.filter_by(is_deleted=True).all()
+    for note in notes:
+        db.session.delete(note)
+    db.session.commit()
+    catat_log("Delete permanen semua catatan")
+    flash("Semua catatan berhasil dihapus permanen.")
+    return redirect("/recently-deleted")
 
 # ========== AUTENTIKASI ==========
 @app.route("/register", methods=["POST"])
