@@ -1,101 +1,124 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ilham Notes</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tickie • Catatan Harian</title>
+
+  <!-- Fonts & Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <style>
     body {
       font-family: 'DM Sans', sans-serif;
       background-color: #f8f9fa;
     }
+
     .navbar-brand {
       font-weight: 600;
+      font-size: 1.25rem;
     }
-    .nav-link.active {
-      font-weight: 600;
-    }
-    .toast-container {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      z-index: 1060;
-    }
-    .table-hover tbody tr:hover {
-      background-color: #f1f1f1;
-    }
+
     .rounded-avatar {
       width: 32px;
       height: 32px;
       border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1055;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .animated {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">Ilham Notes</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand d-flex align-items-center text-dark me-auto" href="/">
+        ✅ <span class="ms-2">Tickie</span>
+      </a>
 
-    <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="/add">Add Entry</a></li>
-        {% if user and user.is_admin %}
-        <li class="nav-item"><a class="nav-link" href="/admin">Admin Panel</a></li>
-        {% endif %}
-      </ul>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-      <ul class="navbar-nav">
-        {% if session['user_id'] %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-            <img src="https://ui-avatars.com/api/?name={{ user.name|default('U') }}" class="rounded-avatar me-2">
-            {{ user.name }}
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/settings">Pengaturan</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/logout">Keluar</a></li>
-          </ul>
-        </li>
-        {% else %}
-        <li class="nav-item"><a class="nav-link" href="/login-page">Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="/register-page">Sign Up</a></li>
-        {% endif %}
-      </ul>
-    </div>
-  </div>
-</nav>
-
-<!-- Flash Message -->
-<div class="toast-container">
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for message in messages %}
-      <div class="toast show align-items-center text-bg-primary border-0 mb-2" role="alert">
-        <div class="d-flex">
-          <div class="toast-body">{{ message }}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
+      <div class="collapse navbar-collapse justify-content-end" id="mainNavbar">
+        <ul class="navbar-nav align-items-center gap-2">
+          {% if user %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" data-bs-toggle="dropdown">
+              <img src="https://ui-avatars.com/api/?name={{ user.name }}&background=0D8ABC&color=fff&size=32" class="rounded-avatar" />
+              {{ user.name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/settings">⚙️ Pengaturan</a></li>
+              {% if user.is_admin %}
+              <li><a class="dropdown-item" href="/admin">🛠️ Admin Panel</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider" /></li>
+              <li><a class="dropdown-item text-danger" href="/logout">Keluar</a></li>
+            </ul>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="btn btn-outline-primary btn-sm" href="/login-page">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-primary btn-sm" href="/register-page">Sign Up</a>
+          </li>
+          {% endif %}
+        </ul>
       </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-</div>
+    </div>
+  </nav>
 
-<!-- Main Content -->
-<div class="container py-4">
-  {% block content %}{% endblock %}
-</div>
+  <!-- Flash Message -->
+  <div class="toast-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+        <div class="toast show text-bg-primary mb-2">
+          <div class="d-flex">
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-{% block script %}{% endblock %}
+  <!-- Halaman Konten -->
+  <main class="container py-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Script Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block script %}{% endblock %}
 </body>
 </html>

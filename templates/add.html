@@ -1,26 +1,22 @@
 {% extends "base.html" %}
-{% block content%}
-<h3>Add Entry</h3>
-<br>
-<form method="post" action="#submit">
-  <div class="mb-2">
-    <label for="titleid" class="form-label">Title: </label>
-    <input type="text" placeholder="Enter Title" id="titleid" name="title" class="form-control">
-
-  </div>
-  <div class="mb-2">
-
-    <label for="decid" class="form-label">Description: </label>
-    <input type="text" placeholder="Enter Description" id="decid" name="description" class="form-control">
-  </div>
-
-
+{% block content %}
+<div class="container py-4" style="max-width: 500px;">
+  <h3 class="mb-4 text-center fw-semibold">➕ Add New Entry</h3>
   
-   <br>
-  <input type="submit" value="Submit Form" class="btn btn-primary">
-</form>
+  <form method="post">
+    <div class="mb-3">
+      <label for="titleid" class="form-label">Title</label>
+      <input type="text" id="titleid" name="title" class="form-control" placeholder="e.g. Gym" required>
+    </div>
 
- 
+    <div class="mb-3">
+      <label for="descid" class="form-label">Description</label>
+      <input type="text" id="descid" name="description" class="form-control" placeholder="e.g. Walk treadmill for 20 minutes" required>
+    </div>
 
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+    </div>
+  </form>
+</div>
 {% endblock %}
-  
