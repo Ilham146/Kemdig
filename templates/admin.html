@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-4">👑 Panel Admin - Daftar Pengguna & Aktivitas</h3>
+
+<div class="table-responsive">
+  <table class="table table-striped table-bordered shadow-sm">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>Nama</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Alamat IP</th>
+        <th>Aktivitas Terakhir</th>
+        <th>Waktu</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ "✅ Admin" if u.is_admin else "User" }}</td>
+        <td>{{ u.ip_address or "-" }}</td>
+        <td>{{ log_terakhir[u.id].aksi if u.id in log_terakhir else "–" }}</td>
+        <td>
+          {% if u.id in log_terakhir %}
+            {{ log_terakhir[u.id].waktu.strftime('%Y-%m-%d %H:%M:%S') }}
+          {% else %}
+            –
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,108 +1,115 @@
 import os
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# ===================== Inisialisasi =====================
+# ========== KONFIGURASI ==========
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-app.secret_key = "rahasia_anda"  # Ganti dengan secret key aman!
-
-app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+app.secret_key = "rahasia_anda"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "database.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
-# ===================== MODEL =====================
-
-class database_model(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.String(200), nullable=False)
-
-    def __init__(self, title, description):
-        self.title = title
-        self.description = description
-
+# ========== MODEL ==========
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    ip_address = db.Column(db.String(45))
 
-# ===================== KONTEKS & OTENTIKASI =====================
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
 
+class LogAktivitas(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    aksi = db.Column(db.String(200), nullable=False)
+    waktu = db.Column(db.DateTime, default=datetime.utcnow)
+    ip_address = db.Column(db.String(45))
+    user = db.relationship("User", backref="log_aktivitas")
+
+# ========== FUNGSI LOG ==========
+def catat_log(aksi):
+    if g.user:
+        log = LogAktivitas(
+            user_id=g.user.id,
+            aksi=aksi,
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
+
+# ========== GLOBAL KONTEKS ==========
 @app.before_request
 def load_current_user():
-    if "user_id" in session:
-        g.user = User.query.get(session["user_id"])
-    else:
-        g.user = None
+    user_id = session.get("user_id")
+    g.user = User.query.get(user_id) if user_id else None
 
 @app.context_processor
 def inject_user():
     return {"user": g.user}
 
-# ===================== ROUTES UTAMA =====================
-
+# ========== ROUTES ==========
 @app.route("/")
 def home():
-    all_records = database_model.query.all()
-    return render_template("view.html", all_records=all_records)
+    notes = Note.query.all()
+    return render_template("view.html", notes=notes)
 
 @app.route("/add", methods=["GET", "POST"])
-def add():
+def add_note():
     if not g.user:
-        flash("Anda harus login terlebih dahulu.")
-        return redirect("/")
+        flash("Silakan login terlebih dahulu.")
+        return redirect("/login-page")
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"]
-        entry = database_model(title, description)
-        db.session.add(entry)
+        note = Note(title=title, description=description)
+        db.session.add(note)
         db.session.commit()
-        flash("Data berhasil ditambahkan.")
+        catat_log(f"Menambahkan catatan: {title}")
+        flash("Catatan berhasil ditambahkan.")
         return redirect("/")
     return render_template("add.html")
 
 @app.route("/update/<int:id>", methods=["GET", "POST"])
-def update(id):
-    if not g.user:
-        flash("Login diperlukan untuk mengedit data.")
-        return redirect("/")
-    item = database_model.query.get_or_404(id)
+def update_note(id):
+    note = Note.query.get_or_404(id)
     if request.method == "POST":
-        item.title = request.form["title"]
-        item.description = request.form["description"]
+        note.title = request.form["title"]
+        note.description = request.form["description"]
         db.session.commit()
-        flash("Data berhasil diperbarui.")
+        catat_log(f"Memperbarui catatan ID: {id}")
+        flash("Catatan berhasil diperbarui.")
         return redirect("/")
-    return render_template("update.html", Item=item)
+    return render_template("update.html", note=note)
 
 @app.route("/delete/<int:id>")
-def delete(id):
-    if not g.user:
-        flash("Login diperlukan untuk menghapus data.")
-        return redirect("/")
-    item = database_model.query.get_or_404(id)
-    db.session.delete(item)
+def delete_note(id):
+    note = Note.query.get_or_404(id)
+    db.session.delete(note)
     db.session.commit()
-    flash("Data berhasil dihapus.")
+    catat_log(f"Menghapus catatan ID: {id}")
+    flash("Catatan berhasil dihapus.")
     return redirect("/")
 
-# ===================== LOGIN / REGISTER =====================
-
+# ========== AUTENTIKASI ==========
 @app.route("/register", methods=["POST"])
 def register():
     name = request.form["signUpName"]
     email = request.form["signUpEmail"].lower()
     password = generate_password_hash(request.form["signUpPassword"])
-
     if User.query.filter_by(email=email).first():
         flash("Email sudah terdaftar.")
         return redirect("/register-page")
-
-    new_user = User(name=name, email=email, password=password)
-    db.session.add(new_user)
+    user = User(name=name, email=email, password=password)
+    db.session.add(user)
     db.session.commit()
     flash("Registrasi berhasil. Silakan login.")
     return redirect("/login-page")
@@ -112,21 +119,22 @@ def login():
     email = request.form["loginEmail"].lower()
     password = request.form["loginPassword"]
     user = User.query.filter_by(email=email).first()
-
     if user and check_password_hash(user.password, password):
         session["user_id"] = user.id
-        flash(f"Selamat datang, {user.name}!")
+        user.ip_address = request.remote_addr
+        db.session.commit()
+        catat_log("Login ke sistem")
+        flash(f"Halo, {user.name}!")
         return redirect("/")
     flash("Email atau password salah.")
     return redirect("/login-page")
 
 @app.route("/logout")
 def logout():
+    catat_log("Logout dari sistem")
     session.pop("user_id", None)
     flash("Anda telah logout.")
     return redirect("/")
-
-# ===================== HALAMAN TAMBAHAN =====================
 
 @app.route("/login-page")
 def login_page():
@@ -139,22 +147,36 @@ def register_page():
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if not g.user:
-        flash("Anda harus login dulu.")
+        flash("Silakan login terlebih dahulu.")
         return redirect("/login-page")
-    
     if request.method == "POST":
         g.user.name = request.form["name"]
         g.user.email = request.form["email"].lower()
         if request.form["password"]:
             g.user.password = generate_password_hash(request.form["password"])
         db.session.commit()
+        catat_log("Mengubah pengaturan profil")
         flash("Pengaturan berhasil diperbarui.")
         return redirect("/settings")
-    
     return render_template("settings.html", user=g.user)
 
-# ===================== JALANKAN APLIKASI =====================
+# ========== PANEL ADMIN ==========
+@app.route("/admin")
+def admin_panel():
+    if not g.user or not g.user.is_admin:
+        flash("Hanya admin yang dapat mengakses halaman ini.")
+        return redirect("/")
 
+    users = User.query.all()
+    # Ambil log terakhir tiap user (dalam dict user_id -> log)
+    log_terakhir = {
+        log.user_id: log
+        for log in LogAktivitas.query.order_by(LogAktivitas.waktu.desc()).all()
+        if log.user_id not in locals().get("log_terakhir", {})
+    }
+
+    return render_template("admin.html", users=users, log_terakhir=log_terakhir)
+# ========== JALANKAN ==========
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
