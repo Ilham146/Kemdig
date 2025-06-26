@@ -4,15 +4,16 @@ from flask import Flask, render_template, request, redirect, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# KONFIGURASI
+# ========== KONFIGURASI ==========
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.secret_key = "rahasia_anda"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "database.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
-# MODEL
+# ========== MODEL ==========
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -34,7 +35,7 @@ class LogAktivitas(db.Model):
     ip_address = db.Column(db.String(45))
     user = db.relationship("User", backref="log_aktivitas")
 
-# FUNGSI LOG
+# ========== FUNGSI LOG ==========
 def catat_log(aksi):
     if g.user:
         log = LogAktivitas(
@@ -45,7 +46,7 @@ def catat_log(aksi):
         db.session.add(log)
         db.session.commit()
 
-# GLOBAL KONTEKS
+# ========== GLOBAL KONTEKS ==========
 @app.before_request
 def load_current_user():
     user_id = session.get("user_id")
@@ -55,13 +56,10 @@ def load_current_user():
 def inject_user():
     return {"user": g.user}
 
-# ROUTES
+# ========== ROUTES ==========
 @app.route("/")
 def home():
-    if g.user:
-        notes = Note.query.order_by(Note.id.desc()).all()
-    else:
-        notes = []
+    notes = Note.query.all()
     return render_template("view.html", notes=notes)
 
 @app.route("/add", methods=["GET", "POST"])
@@ -101,7 +99,7 @@ def delete_note(id):
     flash("Catatan berhasil dihapus.")
     return redirect("/")
 
-# AUTENTIKASI
+# ========== AUTENTIKASI ==========
 @app.route("/register", methods=["POST"])
 def register():
     name = request.form["signUpName"]
@@ -162,7 +160,7 @@ def settings():
         return redirect("/settings")
     return render_template("settings.html", user=g.user)
 
-# PANEL ADMIN
+# ========== PANEL ADMIN ==========
 @app.route("/admin")
 def admin_panel():
     if not g.user or not g.user.is_admin:
@@ -170,14 +168,15 @@ def admin_panel():
         return redirect("/")
 
     users = User.query.all()
-    log_terakhir = {}
-    for log in LogAktivitas.query.order_by(LogAktivitas.waktu.desc()).all():
-        if log.user_id not in log_terakhir:
-            log_terakhir[log.user_id] = log
+    # Ambil log terakhir tiap user (dalam dict user_id -> log)
+    log_terakhir = {
+        log.user_id: log
+        for log in LogAktivitas.query.order_by(LogAktivitas.waktu.desc()).all()
+        if log.user_id not in locals().get("log_terakhir", {})
+    }
 
     return render_template("admin.html", users=users, log_terakhir=log_terakhir)
-
-# JALANKAN
+# ========== JALANKAN ==========
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
