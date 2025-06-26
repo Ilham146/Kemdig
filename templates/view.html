@@ -1,27 +1,44 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="mb-4">
-  <div class="bg-white p-4 rounded shadow-sm text-center">
-    <h2 class="fw-bold text-primary">Catatan Kamu</h2>
-    <p class="text-muted mb-0">Kelola data judul dan deskripsi yang kamu buat.</p>
-  </div>
-</div>
 
-{% if all_records|length == 0 %}
-  <div class="alert alert-warning text-center">Belum ada entri. Klik “Add Entry” untuk menambahkan.</div>
+{% if notes|length == 0 %}
+  <!-- Tampilkan Hero Section jika belum ada catatan -->
+  <div class="text-center py-5">
+    <h1 class="mb-3 fw-bold" style="font-size:2.2rem;">
+      Mulai hari dengan aksi<br>
+      Tutup dengan catatan.
+    </h1>
+    <p class="mb-4 text-muted" style="font-size:1.05rem;">
+      Jejak aktivitas harianmu, tersimpan dengan rapi.
+    </p>
+    {% if not user %}
+      <a href="/register-page" class="btn btn-primary btn-lg px-4">Get Started Now</a>
+    {% else %}
+      <a href="/add" class="btn btn-success btn-lg px-4">Tambah Catatan</a>
+    {% endif %}
+  </div>
 {% else %}
-  {% for x in all_records %}
-    <div class="card mb-3 shadow-sm border-0">
-      <div class="card-body">
-        <h5 class="card-title">{{ x.title }}</h5>
-        <p class="card-text">{{ x.description }}</p>
-        <div class="d-flex justify-content-end gap-2">
-          <a href="/update/{{ x.id }}" class="btn btn-sm btn-outline-warning">Update</a>
-          <a href="/delete/{{ x.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin ingin menghapus entri ini?')">Delete</a>
+  <!-- Tampilkan Kartu Catatan jika sudah ada -->
+  <div class="container py-4">
+    <h3 class="mb-4 fw-semibold">📔 All Entries</h3>
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+      {% for note in notes %}
+      <div class="col">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex flex-column">
+            <h6 class="text-primary mb-1">ID: {{ note.id }}</h6>
+            <h5 class="card-title">{{ note.title }}</h5>
+            <p class="card-text text-muted mb-3">{{ note.description }}</p>
+            <div class="mt-auto d-flex justify-content-end gap-2">
+              <a href="/update/{{ note.id }}" class="btn btn-warning btn-sm">Update</a>
+              <a href="/delete/{{ note.id }}" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+          </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-  {% endfor %}
+  </div>
 {% endif %}
+
 {% endblock %}
