@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="bg-white shadow-sm p-4 rounded mx-auto" style="max-width: 600px;">
+    <h4 class="mb-4 fw-bold">Pengaturan Akun</h4>
+    <form method="POST" action="/settings">
+      <div class="mb-3">
+        <label for="name" class="form-label">Nama Lengkap</label>
+        <input type="text" name="name" id="name" class="form-control" value="{{ user.name }}" required>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" name="email" id="email" class="form-control" value="{{ user.email }}" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password Baru (opsional)</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Kosongkan jika tidak ingin mengubah">
+      </div>
+      <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

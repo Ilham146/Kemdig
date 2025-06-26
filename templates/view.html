@@ -1,36 +1,27 @@
 {% extends "base.html" %}
-{% block content%}
-<h3>All Entries</h3>
-<br>
 
-  {% if all_records|length == 0 %}
-    <h3>No Entries. Click on add entry to add some.</h3>
-  {% else %}
-    {% for x in all_records %}
-    <div class="container my-2 border border-primary" >
-      <div class="p-5 text-center bg-body-tertiary rounded-3" >
-      
-          <div class="row">
-            <div class="col-10">
-              <div class="col fs-5">id: {{x.id}}</div>
-              <div class="col fs-2">Title: {{x.title}}</div>
-              <div class="col fs-4">Description: {{x.description}}</div>
-          
-            </div>
-            <div class="col-1">
-              <a href="/update/{{ x.id }}" class="btn btn-warning" >Update</a>
-            </div>
-            <div class="col-1">
-              <a href="/delete/{{ x.id }}" class="btn btn-danger" >Delete</a>
-            </div>
-          
+{% block content %}
+<div class="mb-4">
+  <div class="bg-white p-4 rounded shadow-sm text-center">
+    <h2 class="fw-bold text-primary">Catatan Kamu</h2>
+    <p class="text-muted mb-0">Kelola data judul dan deskripsi yang kamu buat.</p>
+  </div>
+</div>
+
+{% if all_records|length == 0 %}
+  <div class="alert alert-warning text-center">Belum ada entri. Klik “Add Entry” untuk menambahkan.</div>
+{% else %}
+  {% for x in all_records %}
+    <div class="card mb-3 shadow-sm border-0">
+      <div class="card-body">
+        <h5 class="card-title">{{ x.title }}</h5>
+        <p class="card-text">{{ x.description }}</p>
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/update/{{ x.id }}" class="btn btn-sm btn-outline-warning">Update</a>
+          <a href="/delete/{{ x.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin ingin menghapus entri ini?')">Delete</a>
         </div>
       </div>
-      </div>
-    
-    {% endfor %}
-  {% endif%}
-  
-
+    </div>
+  {% endfor %}
+{% endif %}
 {% endblock %}
-  

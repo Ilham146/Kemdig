@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(#1e2a38, #314e63);
+    background-image: url("https://images.unsplash.com/photo-1508672019048-805c876b67e2");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+  }
+
+  .register-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    padding: 2rem;
+    max-width: 460px;
+    width: 100%;
+  }
+</style>
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="register-card shadow">
+    <h3 class="text-center mb-4">Buat Akun Baru</h3>
+    <form method="POST" action="/register">
+      <div class="mb-3">
+        <label>Nama Lengkap</label>
+        <input type="text" name="signUpName" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Email</label>
+        <input type="email" name="signUpEmail" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Password</label>
+        <input type="password" name="signUpPassword" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-success w-100">Register</button>
+    </form>
+    <hr>
+    <div class="text-center">
+      <small>Sudah punya akun? <a href="/login-page" class="text-decoration-none">Login di sini</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}
