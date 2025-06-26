@@ -1,26 +1,45 @@
-
 {% extends "base.html" %}
-{% block content%}
-<h3>Update Entry</h3>
-<br>
-<form method="post" action="/update/{{Item.id}}">
-  <div class="mb-2">
-    <label for="titleid" class="form-label">Title: </label>
-    <input type="text" placeholder="{{Item.title}}" id="titleid" name="title" class="form-control">
+{% block content %}
+<div class="container py-4" style="max-width: 600px;">
+  <h4 class="fw-bold mb-4 text-center">✏️ Perbarui Catatan</h4>
 
-  </div>
-  <div class="mb-2">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="title" class="form-label">Judul</label>
+      <input type="text" id="title" name="title" class="form-control" value="{{ note.title }}" required>
+    </div>
 
-    <label for="decid" class="form-label">Description: </label>
-    <input type="text" placeholder="{{Item.description}}" id="decid" name="description" class="form-control">
-  </div>
+    <div class="mb-3">
+      <label for="category" class="form-label">Kategori</label>
+      <input type="text" id="category" name="category" class="form-control" value="{{ note.category }}">
+    </div>
 
+    <div class="mb-3">
+      <label for="description" class="form-label">Deskripsi</label>
+      <textarea id="description" name="description" class="form-control" rows="4" required>{{ note.description }}</textarea>
+    </div>
 
-  
-   <br>
-  <input type="submit" value="Submit Form" class="btn btn-primary">
-</form>
+    {% if note.media %}
+      <div class="mb-3">
+        <label class="form-label">Media Sebelumnya:</label><br>
+        {% if note.media.endswith('.mp4') or note.media.endswith('.webm') %}
+          <video controls width="100%">
+            <source src="{{ url_for('static', filename='uploads/' + note.media) }}">
+          </video>
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + note.media) }}" alt="media" class="img-fluid rounded" />
+        {% endif %}
+      </div>
+    {% endif %}
 
+    <div class="mb-3">
+      <label for="media" class="form-label">Ganti Media (opsional)</label>
+      <input type="file" id="media" name="media" class="form-control" accept="image/*,video/*">
+    </div>
 
+    <div class="d-grid mt-4">
+      <button type="submit" class="btn btn-primary btn-lg">Perbarui</button>
+    </div>
+  </form>
+</div>
 {% endblock %}
-  

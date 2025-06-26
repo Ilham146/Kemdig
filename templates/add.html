@@ -1,22 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container py-4" style="max-width: 500px;">
-  <h3 class="mb-4 text-center fw-semibold">➕ Add New Entry</h3>
-  
-  <form method="post">
+<div class="container py-4" style="max-width: 600px;">
+  <h4 class="fw-bold mb-4 text-center">➕ Tambah Catatan Baru</h4>
+
+  <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
     <div class="mb-3">
-      <label for="titleid" class="form-label">Title</label>
-      <input type="text" id="titleid" name="title" class="form-control" placeholder="e.g. Gym" required>
+      <label for="title" class="form-label">Judul</label>
+      <input type="text" id="title" name="title" class="form-control" placeholder="Contoh: Jalan Pagi" required>
+      <div class="invalid-feedback">Judul tidak boleh kosong.</div>
     </div>
 
     <div class="mb-3">
-      <label for="descid" class="form-label">Description</label>
-      <input type="text" id="descid" name="description" class="form-control" placeholder="e.g. Walk treadmill for 20 minutes" required>
+      <label for="category" class="form-label">Kategori</label>
+      <input type="text" id="category" name="category" class="form-control" placeholder="Contoh: Kesehatan / Umum">
     </div>
 
-    <div class="d-grid">
-      <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+    <div class="mb-3">
+      <label for="description" class="form-label">Deskripsi</label>
+      <textarea id="description" name="description" class="form-control" rows="4" placeholder="Tulis catatanmu di sini..." required></textarea>
+      <div class="invalid-feedback">Deskripsi tidak boleh kosong.</div>
+    </div>
+
+    <div class="mb-3">
+      <label for="media" class="form-label">Upload Gambar / Video (opsional)</label>
+      <input type="file" id="media" name="media" class="form-control" accept="image/*,video/*">
+    </div>
+
+    <div class="d-grid mt-4">
+      <button type="submit" class="btn btn-primary btn-lg">Simpan Catatan</button>
     </div>
   </form>
 </div>
+
+<!-- Validasi Bootstrap -->
+<script>
+(() => {
+  'use strict';
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+</script>
 {% endblock %}

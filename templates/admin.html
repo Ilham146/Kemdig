@@ -1,39 +1,265 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="mb-4">👑 Panel Admin - Daftar Pengguna & Aktivitas</h3>
 
-<div class="table-responsive">
-  <table class="table table-striped table-bordered shadow-sm">
-    <thead class="table-light">
-      <tr>
-        <th>#</th>
-        <th>Nama</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Alamat IP</th>
-        <th>Aktivitas Terakhir</th>
-        <th>Waktu</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in users %}
-      <tr>
-        <td>{{ u.id }}</td>
-        <td>{{ u.name }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ "✅ Admin" if u.is_admin else "User" }}</td>
-        <td>{{ u.ip_address or "-" }}</td>
-        <td>{{ log_terakhir[u.id].aksi if u.id in log_terakhir else "–" }}</td>
-        <td>
-          {% if u.id in log_terakhir %}
-            {{ log_terakhir[u.id].waktu.strftime('%Y-%m-%d %H:%M:%S') }}
-          {% else %}
-            –
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="container py-4">
+  <h4 class="fw-bold mb-4">🛠️ Admin Panel</h4>
+
+  <div class="row g-4">
+    <!-- TILE: Pengguna -->
+    <div class="col-md-4">
+      <button class="btn p-0 border-0 w-100 text-start" onclick="loadUserList()" style="all: unset; cursor: pointer;">
+        <div class="card bg-gradient-primary text-white shadow-sm border-0 transition-card">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-uppercase small mb-1 fw-semibold">Pengguna</div>
+              <h2 class="mb-0">{{ user_count }}</h2>
+            </div>
+            <i class="fas fa-users fa-2x opacity-75"></i>
+          </div>
+          <div class="card-footer text-white-50 small text-end border-0">Lihat daftar pengguna →</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- TILE: Catatan -->
+    <div class="col-md-4">
+      <div class="card bg-gradient-success text-white shadow-sm border-0 transition-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-uppercase small mb-1 fw-semibold">Catatan</div>
+            <h2 class="mb-0">{{ note_count }}</h2>
+          </div>
+          <i class="fas fa-sticky-note fa-2x opacity-75"></i>
+        </div>
+        <div class="card-footer text-white-50 small text-end border-0">Total catatan pengguna</div>
+      </div>
+    </div>
+
+    <!-- TILE: Log Aktivitas -->
+    <div class="col-md-4">
+      <button class="btn p-0 border-0 w-100 text-start" onclick="loadLog()" style="all: unset; cursor: pointer;">
+        <div class="card bg-gradient-warning text-white shadow-sm border-0 transition-card">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-uppercase small mb-1 fw-semibold">Log Aktivitas</div>
+              <h2 class="mb-0">{{ log_count }}</h2>
+            </div>
+            <i class="fas fa-file-alt fa-2x opacity-75"></i>
+          </div>
+          <div class="card-footer text-white-50 small text-end border-0">Lihat riwayat login & aksi →</div>
+        </div>
+      </button>
+    </div>
+  </div>
 </div>
+
+<!-- MODAL: Daftar Pengguna -->
+<div class="modal fade" id="userListModal" tabindex="-1" aria-labelledby="userListLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userListLabel">📋 Daftar Pengguna</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="userListContent">
+        <div class="text-center py-4 text-muted">Memuat data pengguna...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Detail Pengguna -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title">Detail Pengguna</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="userDetailContent">
+        <div class="text-center py-3">Memuat data...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Log Aktivitas -->
+<div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title">📒 Log Aktivitas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="logContent">
+        <div class="text-center py-3 text-muted">Memuat log...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+  function loadUserList() {
+    const modal = new bootstrap.Modal(document.getElementById('userListModal'));
+    const target = document.getElementById('userListContent');
+    target.innerHTML = '<div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>';
+
+    fetch('/admin/user/json/all')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.users.length) {
+          target.innerHTML = "<p class='text-center text-muted'>Belum ada pengguna.</p>";
+          return;
+        }
+        target.innerHTML = `
+          <div class="list-group">
+            ${data.users.map(u => `
+              <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id})" style="cursor: pointer">
+                <strong>${u.name}</strong><br>
+                <small class="text-muted">${u.email}</small>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      });
+
+    modal.show();
+  }
+  
+
+  function showUserDetailModal(userId) {
+    const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+    document.getElementById("userDetailContent").innerHTML = '<div class="text-center">Memuat data...</div>';
+
+    fetch(`/admin/user/json/${userId}`)
+      .then(res => res.json())
+      .then(user => {
+        const html = `
+          <div class="text-center mb-3">
+            <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
+                 class="rounded-circle mb-2" alt="Avatar">
+            <h5 class="fw-bold mb-0">${user.name}</h5>
+            <div class="text-muted small">${user.email}</div>
+          </div>
+          <hr />
+          <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
+          <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
+        `;
+        document.getElementById("userDetailContent").innerHTML = html;
+      });
+
+    modal.show();
+  }
+
+  function loadLog() {
+    const modal = new bootstrap.Modal(document.getElementById('logModal'));
+    const target = document.getElementById('logContent');
+    target.innerHTML = "<div class='text-center text-muted py-3'>Memuat log aktivitas...</div>";
+
+    fetch("/admin/log/json")
+      .then(res => res.json())
+      .then(data => {
+        const logs = data.logs;
+        if (!logs.length) {
+          target.innerHTML = "<p class='text-center text-muted'>Tidak ada log aktivitas.</p>";
+          return;
+        }
+        target.innerHTML = logs.map(l => `
+          <div class="border-bottom py-2 small">
+            <span class="text-primary fw-semibold">${l.waktu}</span> →
+            <strong>${l.aksi}</strong> oleh
+            <span class="text-muted">${l.user} (${l.ip})</span>
+          </div>
+        `).join("");
+      });
+
+    modal.show();
+  }
+
+  function showUserDetailModal(userId) {
+  const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+  const target = document.getElementById("userDetailContent");
+  target.innerHTML = '<div class="text-center py-3 text-muted">Memuat data pengguna...</div>';
+
+  fetch(`/admin/user/json/${userId}`)
+    .then(res => res.json())
+    .then(user => {
+      target.innerHTML = `
+        <div class="text-center mb-3">
+          <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
+               class="rounded-circle mb-2" alt="Avatar">
+          <h5 class="fw-bold mb-0">${user.name}</h5>
+          <div class="text-muted small">${user.email}</div>
+        </div>
+        <hr />
+        <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
+        <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
+
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-sm btn-outline-secondary" onclick="restoreUser(${user.id})">
+            <i class="fas fa-undo-alt"></i> Restore
+          </button>
+          <button class="btn btn-sm btn-primary" onclick="backupUser(${user.id})">
+            <i class="fas fa-cloud-download-alt"></i> Backup
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+            <i class="fas fa-trash-alt"></i> Delete
+          </button>
+        </div>
+      `;
+    });
+
+  modal.show();
+}
+
+function restoreUser(id) {
+  fetch(`/admin/user/${id}/restore`, { method: "POST" })
+    .then(res => res.ok ? alert("User berhasil dipulihkan!") : alert("Gagal restore."));
+}
+
+function backupUser(id) {
+  fetch(`/admin/user/${id}/backup`)
+    .then(res => res.json())
+    .then(data => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `backup_user_${id}.json`;
+      link.click();
+    });
+}
+
+function deleteUser(id) {
+  if (!confirm("Yakin ingin menonaktifkan user ini?")) return;
+  fetch(`/admin/user/${id}/delete`, { method: "POST" })
+    .then(res => res.ok ? alert("User dinonaktifkan.") : alert("Gagal menghapus."));
+}
+</script>
+
+<style>
+  .transition-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .transition-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(126, 63, 242, 0.2);
+  }
+  .modal.fade .modal-dialog {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  .modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+  }
+  .modal-backdrop.show {
+    backdrop-filter: blur(6px);
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+</style>
 {% endblock %}
