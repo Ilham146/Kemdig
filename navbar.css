@@ -1,0 +1,163 @@
+/* Color */
+:root {
+    --primary-blue: #007bff;
+    --secondary-blue: #EEF4FA; /* Light blue for active sidebar item */
+    --text-color: #0F172A; /* Warna teks utama */
+    --light-text: #666; /* Warna teks sekunder/ringan (untuk ikon user profile) */
+    --header-text-light-grey: #888; /* Warna abu-abu untuk header sidebar (Dashboard, Role) */
+    --active-item-color: #0F172A; /* Warna teks untuk item aktif */
+    --border-color: #e0e0e0;
+    --top: #f9fbfd;
+
+}
+
+body {
+    font-family: 'DM Sans', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f2f5;
+    color: var(--text-color);
+    display: flex;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.top-navbar {
+    background-color: var(--top);
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 70px;
+    box-sizing: border-box;
+}
+
+.navbar-left .logo {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-left .logo-img {
+    height: 30px;
+    width: auto;
+    margin-right: 8px;
+}
+
+.navbar-left .logo span {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.navbar-right .user-profile {
+    font-size: 1.8em;
+    color: var(--light-text);
+    cursor: pointer;
+}
+
+.main-content-wrapper {
+    display: flex;
+    flex: 1;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--secondary-blue);
+    padding: 20px 0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 70px);
+    position: sticky;
+    top: 70px;
+    left: 0;
+    box-sizing: border-box;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-section-header {
+    font-weight: normal;
+    color: var(--header-text-light-grey); 
+    font-size: 0.95em;
+    padding: 15px 25px 5px 25px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.sidebar-nav a.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 25px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 1.05em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-nav a.nav-item i {
+    margin-right: 15px;
+    font-size: 1.2em;
+    color: var(--text-color);
+}
+
+.sidebar-nav a.nav-item:hover {
+    background-color: #e9e9e9;
+    color: var(--text-color);
+}
+
+.sidebar-nav a.nav-item.active {
+    background-color: var(--secondary-blue);
+    color: var(--active-item-color);
+    font-weight: 600;
+    border-radius: 0 25px 25px 0;
+    position: relative;
+}
+
+.sidebar-nav a.nav-item.active i {
+    color: var(--active-item-color);
+}
+
+.sidebar-nav a.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background-color: var(--primary-blue);
+    border-radius: 0 5px 5px 0;
+}
+
+
+.content-area {
+    flex: 1;
+    padding: 30px;
+    background-color: #f0f2f5;
+}
+
+.content-area h1 {
+    color: var(--text-color);
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 2em;
+    font-weight: 600;
+}
+
+.content-area p {
+    color: var(--light-text);
+}
