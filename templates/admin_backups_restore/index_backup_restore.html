@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Backup & Restore</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="top-navbar">
+            <div class="navbar-left">
+                <div class="logo">
+                    <img src="tickie.png" alt="Tickie Logo" class="logo-img">
+                    <span>Tickie</span>
+                </div>
+            </div>
+            <div class="navbar-right">
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li><div class="nav-section-header">Dashboard</div></li>
+                        <li><a href="#" class="nav-item">Management User</a></li>
+                        <li><a href="#" class="nav-item active">Backup & Restore</a></li>
+                        <li><a href="#" class="nav-item">Log Activities</a></li>
+
+                        <li><div class="nav-section-header">Role</div></li>
+                        <li>
+                            <a href="#" class="nav-item">
+                                <i class="fas fa-user"></i> User
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-item">
+                                <i class="fas fa-user-shield"></i> Admin
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="content-area">
+                <h1>Backup & Restore</h1>
+
+                <div class="search-bar-container">
+                    <input type="text" id="searchInput" placeholder="Search...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>IP Address</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="stats-container">
+                    <p>Total Pengguna: <span id="totalUsers">0</span></p>
+                    <p>Total Jurnal: <span id="totalJournals">0</span></p>
+                    <p>Total Di-Backup: <span id="totalBackedUp">0</span></p> </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
