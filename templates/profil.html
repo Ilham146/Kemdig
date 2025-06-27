@@ -1,0 +1,39 @@
+{% extends "admin.html" %}
+{% block title %}Profil Saya{% endblock %}
+
+{% block admin_content %}
+<div class="container py-4">
+  <h4 class="fw-bold mb-4"><i class="fas fa-user"></i> Profil Saya</h4>
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label">Info Singkat</label>
+      <textarea name="info" class="form-control" rows="2">{{ user.info }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Alamat</label>
+      <input name="address" class="form-control" value="{{ user.address }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">No. HP</label>
+      <input name="phone" class="form-control" value="{{ user.phone }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Mood</label>
+      <textarea name="mood" class="form-control" rows="2">{{ user.mood }}</textarea>
+    </div>
+    <button class="btn btn-primary"><i class="fas fa-save me-2"></i>Simpan</button>
+  </form>
+
+  <hr class="my-4">
+
+  <h5>🔍 Pratinjau Profil</h5>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <p><strong>Info:</strong> {{ user.info or '–' }}</p>
+      <p><strong>Alamat:</strong> {{ user.address or '–' }}</p>
+      <p><strong>No. HP:</strong> {{ user.phone or '–' }}</p>
+      <p><strong>Mood:</strong> {{ user.mood or '–' }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
