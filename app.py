@@ -50,6 +50,7 @@ for stmt in [
 ]:
     try: c.execute(stmt)
     except sqlite3.OperationalError: pass
+
 conn.commit()
 conn.close()
 
@@ -62,6 +63,10 @@ app.config["UPLOAD_FOLDER"] = os.path.join(basedir, "static/uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db = SQLAlchemy(app)
+
+@app.context_processor
+def inject_user():
+    return {"user": g.user}
 
 # ── MODELS ─────────────────────────────────────────────────────────────────────
 class User(db.Model):
@@ -275,20 +280,24 @@ def logout():
     return redirect("/login-page")
 
 # ── SETTINGS & PROFILE ─────────────────────────────────────────────────────────
-@app.route("/settings", methods=["GET", "POST"])
+@app.route("/settings", methods=["GET","POST"])
 def settings():
     if not g.user:
         return redirect("/login-page")
+
     if request.method == "POST":
-        g.user.name = request.form["name"]
+        g.user.name  = request.form["name"]
         g.user.email = request.form["email"].lower()
-        if request.form["password"]:
-            g.user.password = generate_password_hash(request.form["password"])
+        pwd = request.form.get("password","")
+        if pwd:
+            g.user.password = generate_password_hash(pwd)
         db.session.commit()
         catat_log("Memperbarui profil dasar")
         flash("Profil dasar diperbarui.")
         return redirect("/settings")
-    return render_template("settings.html")
+
+    # ← kirim user ke template
+    return render_template("settings.html", user=g.user)
 
 @app.route("/profile", methods=["GET","POST"])
 def profile():
