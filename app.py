@@ -4,6 +4,10 @@ from flask import Flask, render_template, request, redirect, session, flash, g, 
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from cryptography.fernet import Fernet
+
+SECRET_KEY = b'N7JdUOx_E24A81gK5J3dGZgPMZ0XBRFntn2U20r80aM='
+cipher = Fernet(SECRET_KEY)
 
 app = Flask(__name__)
 app.secret_key = "tickie_secret"
@@ -68,17 +72,30 @@ def home():
         flash("Silakan login terlebih dahulu.")
         return redirect("/login-page")
     notes = Note.query.filter_by(user_id=g.user.id).order_by(Note.timestamp.desc()).all()
+
+    for note in notes:
+        try:
+            note.title = cipher.decrypt(note.title.encode()).decode()
+            note.description = cipher.decrypt(note.description.encode()).decode()
+        except:
+            note.title = "[DEKRIPSI GAGAL]"
+            note.description = "[DEKRIPSI GAGAL]"
+
     return render_template("view.html", notes=notes)
+
 
 @app.route("/add", methods=["GET", "POST"])
 def add_note():
     if not g.user:
         return redirect("/login-page")
     if request.method == "POST":
-        title = request.form["title"]
-        description = request.form["description"]
+        title_raw = request.form["title"]
+        description_raw = request.form["description"]
         category = request.form.get("category")
         media_file = request.files.get("media")
+
+        title = cipher.encrypt(title_raw.encode()).decode()
+        description = cipher.encrypt(description_raw.encode()).decode()
 
         filename = None
         if media_file and media_file.filename != "":
@@ -91,10 +108,11 @@ def add_note():
             user_id=g.user.id
         ))
         db.session.commit()
-        catat_log("Menambahkan catatan")
+        catat_log("Menambahkan catatan terenkripsi")
         flash("Catatan berhasil ditambahkan.")
         return redirect("/")
     return render_template("add.html")
+
 
 @app.route("/update/<int:id>", methods=["GET", "POST"])
 def update_note(id):
