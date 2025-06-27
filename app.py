@@ -33,6 +33,7 @@ class User(db.Model):
     logs = db.relationship("LogAktivitas", backref="user", lazy=True)
     is_active = db.Column(db.Boolean, default=True)
 
+
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -196,16 +197,60 @@ def logout():
 def settings():
     if not g.user:
         return redirect("/login-page")
+
     if request.method == "POST":
-        g.user.name = request.form["name"]
-        g.user.email = request.form["email"].lower()
-        if request.form["password"]:
-            g.user.password = generate_password_hash(request.form["password"])
+        name = request.form["name"].strip()
+        email = request.form["email"].strip().lower()
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        # Validasi dasar
+        if not name or not email:
+            flash("Nama dan email tidak boleh kosong.")
+            return redirect("/settings")
+
+        # Validasi email sederhana
+        if "@" not in email or "." not in email:
+            flash("Format email tidak valid.")
+            return redirect("/settings")
+
+        # Cek jika user ingin ganti password
+        if new_password or confirm_password:
+            # Wajib isi password lama
+            if not current_password:
+                flash("Harap masukkan password saat ini untuk mengganti password.")
+                return redirect("/settings")
+
+            # Verifikasi password lama
+            if not check_password_hash(g.user.password, current_password):
+                flash("Password saat ini salah.")
+                return redirect("/settings")
+
+            # Minimal panjang password baru
+            if len(new_password) < 8:
+                flash("Password baru harus minimal 8 karakter.")
+                return redirect("/settings")
+
+            # Konfirmasi password
+            if new_password != confirm_password:
+                flash("Password baru dan konfirmasi tidak cocok.")
+                return redirect("/settings")
+
+            # Set password baru
+            g.user.password = generate_password_hash(new_password)
+
+        # Update data dasar
+        g.user.name = name
+        g.user.email = email
+
         db.session.commit()
         catat_log("Memperbarui profil")
-        flash("Profil diperbarui.")
+        flash("Profil berhasil diperbarui.")
         return redirect("/settings")
-    return render_template("settings.html")
+
+    return render_template("settings.html", user=g.user)
+
 
 @app.route("/admin")
 def admin_panel():
