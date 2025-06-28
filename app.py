@@ -145,20 +145,35 @@ def add_note():
 @app.route("/update/<int:id>", methods=["GET", "POST"])
 def update_note(id):
     note = Note.query.get_or_404(id)
-    if not g.user or note.user_id != g.user.id: return redirect("/")
+    if not g.user or note.user_id != g.user.id:
+        return redirect("/")
+
     if request.method == "POST":
-        note.title = request.form["title"]
-        note.description = request.form["description"]
+        # Enkripsi ulang title dan description
+        note.title = cipher.encrypt(request.form["title"].encode()).decode()
+        note.description = cipher.encrypt(request.form["description"].encode()).decode()
         note.category = request.form.get("category")
+
+        # Update media jika ada
         file = request.files.get("media")
         if file and file.filename:
             fname = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], fname))
             note.media = fname
+
         db.session.commit()
         catat_log("Memperbarui catatan")
         flash("Catatan diperbarui.")
         return redirect("/")
+
+    # Dekripsi dulu sebelum dikirim ke template
+    try:
+        note.title = cipher.decrypt(note.title.encode()).decode()
+        note.description = cipher.decrypt(note.description.encode()).decode()
+    except:
+        note.title = "[DEKRIPSI GAGAL]"
+        note.description = "[DEKRIPSI GAGAL]"
+
     return render_template("update.html", note=note)
 
 @app.route("/delete/<int:id>")
@@ -297,14 +312,6 @@ def user_profile(id):
                 g.user.profile_photo = fn
                 catat_log("Upload avatar")
 
-        elif form_type == "cover":
-            file = request.files.get("cover_photo")
-            if file and file.filename:
-                fn = secure_filename(file.filename)
-                file.save(os.path.join(app.config["UPLOAD_FOLDER"], fn))
-                g.user.cover_photo = fn
-                catat_log("Upload cover photo")
-
         elif form_type == "bio":
             g.user.name    = request.form.get("name", "")
             g.user.info    = request.form.get("info", "")
@@ -391,4 +398,5 @@ def admin_log_json():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

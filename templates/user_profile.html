@@ -57,16 +57,6 @@
 {% block content %}
 <div class="profile-page">
   <div class="card profile-card">
-    {# kita set background‐style langsung di markup, bukan di CSS #}
-    <div
-      class="profile-header"
-      style="
-        background: 
-          {{ profile.cover_photo
-             and "url('" + url_for('static', filename='uploads/' + profile.cover_photo) + "') center/cover no-repeat"
-             or "#6f42c1" }};
-      ">
-    </div>
 
     {% if profile.profile_photo %}
       <img
