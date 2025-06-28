@@ -83,42 +83,96 @@
 
 {% block script %}
 <script>
+// Referensi global untuk instance modal Bootstrap
+let userListModalInstance;
+let userDetailModalInstance;
+let logModalInstance;
+
+// Inisialisasi instance modal saat DOM dimuat
+document.addEventListener('DOMContentLoaded', function() {
+    userListModalInstance = new bootstrap.Modal(document.getElementById('userListModal'), { keyboard: false });
+    userDetailModalInstance = new bootstrap.Modal(document.getElementById('userDetailModal'), { keyboard: false });
+    logModalInstance = new bootstrap.Modal(document.getElementById('logModal'), { keyboard: false });
+
+    // Event listener untuk saat modal detail pengguna ditutup
+    document.getElementById('userDetailModal').addEventListener('hidden.bs.modal', function () {
+        // Tampilkan kembali modal daftar pengguna jika ada dan terlihat
+        if (userListModalInstance._isShown) {
+            document.body.classList.add('modal-open'); // Bootstrap 5 bug fix for nested modals
+            document.getElementById('userListModal').style.display = 'block';
+        }
+    });
+
+    // Event listener untuk saat modal daftar pengguna ditutup
+    document.getElementById('userListModal').addEventListener('hidden.bs.modal', function () {
+        // Pastikan tidak ada modal detail pengguna yang sedang terbuka
+        if (!userDetailModalInstance._isShown) {
+            document.body.classList.remove('modal-open');
+        }
+    });
+});
+
+// Fungsi untuk memuat daftar pengguna ke dalam modal
 function loadUserList() {
-  const modal = new bootstrap.Modal(document.getElementById('userListModal'));
   const target = document.getElementById('userListContent');
   target.innerHTML = '<div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>';
 
-  fetch('/admin/user/json/all')
-    .then(res => res.json())
+  fetch('/admin/user/json/all') // Pastikan endpoint ini mengembalikan daftar pengguna
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
-      if (!data.users.length) {
+      if (!data.users || !data.users.length) {
         target.innerHTML = "<p class='text-center text-muted'>Belum ada pengguna.</p>";
         return;
       }
       target.innerHTML = `
         <div class="list-group">
           ${data.users.map(u => `
-            <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id})" style="cursor: pointer">
+            <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id}, event)" style="cursor: pointer">
               <strong>${u.name}</strong><br>
               <small class="text-muted">${u.email}</small>
             </div>
           `).join("")}
         </div>
       `;
+    })
+    .catch(error => {
+      console.error('Terjadi kesalahan saat memuat daftar pengguna:', error);
+      target.innerHTML = `<div class="alert alert-danger" role="alert">Gagal memuat daftar pengguna. ${error.message}</div>`;
     });
 
-  modal.show();
+  userListModalInstance.show();
 }
 
-function showUserDetailModal(userId) {
-  const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+// Fungsi untuk menampilkan detail pengguna ke dalam modal
+function showUserDetailModal(userId, event) {
+  // Cegah event klik menyebar (jika ini dalam elemen yang dapat diklik lain)
+  if (event) {
+    event.stopPropagation();
+  }
+
   const target = document.getElementById("userDetailContent");
   target.innerHTML = '<div class="text-center py-3 text-muted">Memuat data pengguna...</div>';
 
-  fetch(`/admin/user/json/${userId}`)
-    .then(res => res.json())
+  // Sembunyikan modal daftar pengguna sementara
+  if (userListModalInstance._isShown) {
+      document.getElementById('userListModal').style.display = 'none';
+  }
+
+  fetch(`/admin/user/json/${userId}`) // Pastikan endpoint ini mengembalikan detail pengguna
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(user => {
-      const photo = user.profile_photo ? `/static/uploads/${user.profile_photo}` : '/static/uploads/default-avatar.png';
+      // Menggunakan ui-avatars.com jika profile_photo tidak tersedia atau kosong
+      const photo = user.profile_photo && user.profile_photo !== 'None' ? `/static/uploads/${user.profile_photo}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7e3ff2&color=fff&size=100`;
       target.innerHTML = `
         <div class="text-center mb-3">
           <img src="${photo}" class="rounded-circle mb-2" width="100" height="100" style="object-fit: cover;" alt="Foto Profil">
@@ -127,64 +181,127 @@ function showUserDetailModal(userId) {
         </div>
         <hr />
         <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
-        <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
+        <p><strong>Alamat IP Terakhir:</strong> ${user.ip_address || '—'}</p>
 
-        <div class="d-flex justify-content-between mt-4">
-          <button class="btn btn-sm btn-outline-secondary" onclick="restoreUser(${user.id})">
+        <div class="d-flex justify-content-between flex-wrap mt-4 gap-2">
+          <button class="btn btn-sm btn-outline-secondary flex-grow-1" onclick="restoreUser(${user.id})">
             <i class="fas fa-undo-alt"></i> Pulihkan
           </button>
-          <button class="btn btn-sm btn-primary" onclick="backupUser(${user.id})">
+          <button class="btn btn-sm btn-primary flex-grow-1" onclick="backupUser(${user.id}, '${user.name}')">
             <i class="fas fa-cloud-download-alt"></i> Cadangkan
           </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+          <button class="btn btn-sm btn-danger flex-grow-1" onclick="deleteUser(${user.id})">
             <i class="fas fa-trash-alt"></i> Nonaktifkan
           </button>
+          <a href="mailto:${user.email}" class="btn btn-sm btn-info flex-grow-1">
+            <i class="fas fa-envelope"></i> Kirim Email
+          </a>
         </div>
       `;
+    })
+    .catch(error => {
+      console.error('Terjadi kesalahan saat memuat detail pengguna:', error);
+      target.innerHTML = `<div class="alert alert-danger" role="alert">Gagal memuat detail pengguna. ${error.message}</div>`;
     });
 
-  modal.show();
+  userDetailModalInstance.show();
 }
 
+// Fungsi aksi admin: Pulihkan Pengguna
 function restoreUser(id) {
-  fetch(`/admin/user/${id}/restore`, { method: "POST" })
-    .then(res => res.ok ? alert("Pengguna berhasil dipulihkan!") : alert("Gagal memulihkan."))
-    .catch(error => console.error('Error:', error));
+  if (confirm("Yakin ingin memulihkan pengguna ini?")) {
+    fetch(`/admin/user/${id}/restore`, { method: "POST" })
+      .then(res => {
+        if (res.ok) {
+          alert("Pengguna berhasil dipulihkan!");
+          userDetailModalInstance.hide(); // Sembunyikan modal detail
+          loadUserList(); // Muat ulang daftar pengguna untuk memperbarui status
+        } else {
+          // Coba parse error message dari respons jika ada
+          res.json().then(data => {
+            alert("Gagal memulihkan pengguna: " + (data.message || "Terjadi kesalahan."));
+          }).catch(() => {
+            alert("Gagal memulihkan pengguna. Status: " + res.status);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error memulihkan pengguna:', error);
+        alert("Terjadi kesalahan jaringan atau server saat memulihkan pengguna.");
+      });
+  }
 }
 
-function backupUser(id) {
+// Fungsi aksi admin: Cadangkan Pengguna
+function backupUser(id, name) {
   fetch(`/admin/user/${id}/backup`)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `backup_user_${id}.json`;
+      link.download = `backup_pengguna_${name.replace(/\s+/g, '_').toLowerCase()}_${id}.json`;
+      document.body.appendChild(link); // Penting untuk menambahkan link ke DOM
       link.click();
+      document.body.removeChild(link); // Hapus link setelah klik
+      alert("Data pengguna berhasil dicadangkan!");
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+      console.error('Error mencadangkan pengguna:', error);
+      alert("Terjadi kesalahan saat mencadangkan pengguna. " + error.message);
+    });
 }
 
+// Fungsi aksi admin: Nonaktifkan Pengguna
 function deleteUser(id) {
-  if (!confirm("Yakin ingin menonaktifkan pengguna ini?")) return;
-  fetch(`/admin/user/${id}/delete`, { method: "POST" })
-    .then(res => res.ok ? alert("Pengguna dinonaktifkan.") : alert("Gagal menonaktifkan."))
-    .catch(error => console.error('Error:', error));
+  if (confirm("Yakin ingin menonaktifkan pengguna ini? Tindakan ini dapat dibalikkan dengan tombol 'Pulihkan'.")) {
+    fetch(`/admin/user/${id}/delete`, { method: "POST" })
+      .then(res => {
+        if (res.ok) {
+          alert("Pengguna berhasil dinonaktifkan.");
+          userDetailModalInstance.hide(); // Sembunyikan modal detail
+          loadUserList(); // Muat ulang daftar pengguna untuk memperbarui status
+        } else {
+          res.json().then(data => {
+            alert("Gagal menonaktifkan pengguna: " + (data.message || "Terjadi kesalahan."));
+          }).catch(() => {
+            alert("Gagal menonaktifkan pengguna. Status: " + res.status);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error menonaktifkan pengguna:', error);
+        alert("Terjadi kesalahan jaringan atau server saat menonaktifkan pengguna.");
+      });
+  }
 }
 
+// Fungsi untuk memuat log aktivitas ke dalam modal
 function loadLog() {
-  const modal = new bootstrap.Modal(document.getElementById('logModal'));
   const target = document.getElementById('logContent');
-  target.innerHTML = "<div class='text-center text-muted py-3'>Memuat log aktivitas...</div>";
+  target.innerHTML = "<div class='text-center py-3 text-muted'>Memuat log aktivitas...</div>";
 
-  fetch("/admin/log/json")
-    .then(res => res.json())
+  fetch("/admin/log/json") // Pastikan endpoint ini mengembalikan daftar log
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       const logs = data.logs;
-      if (!logs.length) {
+      if (!logs || !logs.length) {
         target.innerHTML = "<p class='text-center text-muted'>Tidak ada log aktivitas.</p>";
         return;
       }
+      // Logika untuk menampilkan log, diurutkan terbaru ke terlama
+      // Asumsi 'waktu' dapat di-parse menjadi tanggal atau ada properti 'timestamp'
+      logs.sort((a, b) => new Date(b.waktu) - new Date(a.waktu)); 
       target.innerHTML = logs.map(l => `
         <div class="border-bottom py-2 small">
           <span class="text-primary fw-semibold">${l.waktu}</span> →
@@ -193,7 +310,12 @@ function loadLog() {
         </div>
       `).join("");
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+      console.error('Terjadi kesalahan saat memuat log aktivitas:', error);
+      target.innerHTML = `<div class="alert alert-danger" role="alert">Gagal memuat log aktivitas. ${error.message}</div>`;
+    });
+
+  logModalInstance.show();
 }
 </script>
 
@@ -245,6 +367,16 @@ function loadLog() {
   .modal-backdrop.show {
     backdrop-filter: blur(6px);
     background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  /* Perbaikan untuk modal bersarang agar backdrop tidak hilang */
+  /* Ini memastikan backdrop tetap ada saat ada modal kedua muncul */
+  .modal-open .modal {
+      overflow-x: hidden;
+      overflow-y: auto;
+  }
+  .modal-backdrop + .modal-backdrop {
+      z-index: 1050; /* Pastikan backdrop modal kedua di atas yang pertama */
   }
 </style>
 {% endblock %}
