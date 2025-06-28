@@ -2,13 +2,12 @@
 {% block content %}
 
 <div class="container py-4">
-  <h4 class="fw-bold mb-4">🛠️ Admin Panel</h4>
+  <h4 class="fw-bold mb-4">⚙️ Panel Admin</h4>
 
   <div class="row g-4">
-    <!-- TILE: Pengguna -->
     <div class="col-md-4">
       <button class="btn p-0 border-0 w-100 text-start" onclick="loadUserList()" style="all: unset; cursor: pointer;">
-        <div class="card bg-gradient-primary text-white shadow-sm border-0 transition-card">
+        <div class="card bg-gradient-primary text-white shadow-sm border-0 transition-card custom-card-pengguna">
           <div class="card-body d-flex justify-content-between align-items-center">
             <div>
               <div class="text-uppercase small mb-1 fw-semibold">Pengguna</div>
@@ -21,10 +20,9 @@
       </button>
     </div>
 
-    <!-- TILE: Log Aktivitas -->
     <div class="col-md-4">
       <button class="btn p-0 border-0 w-100 text-start" onclick="loadLog()" style="all: unset; cursor: pointer;">
-        <div class="card bg-gradient-warning text-white shadow-sm border-0 transition-card">
+        <div class="card bg-gradient-warning text-white shadow-sm border-0 transition-card custom-card-log">
           <div class="card-body d-flex justify-content-between align-items-center">
             <div>
               <div class="text-uppercase small mb-1 fw-semibold">Log Aktivitas</div>
@@ -39,7 +37,6 @@
   </div>
 </div>
 
-<!-- MODAL: Daftar Pengguna -->
 <div class="modal fade" id="userListModal" tabindex="-1" aria-labelledby="userListLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -54,7 +51,6 @@
   </div>
 </div>
 
-<!-- MODAL: Detail Pengguna -->
 <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -69,7 +65,6 @@
   </div>
 </div>
 
-<!-- MODAL: Log Aktivitas -->
 <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -136,13 +131,13 @@ function showUserDetailModal(userId) {
 
         <div class="d-flex justify-content-between mt-4">
           <button class="btn btn-sm btn-outline-secondary" onclick="restoreUser(${user.id})">
-            <i class="fas fa-undo-alt"></i> Restore
+            <i class="fas fa-undo-alt"></i> Pulihkan
           </button>
           <button class="btn btn-sm btn-primary" onclick="backupUser(${user.id})">
-            <i class="fas fa-cloud-download-alt"></i> Backup
+            <i class="fas fa-cloud-download-alt"></i> Cadangkan
           </button>
           <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
-            <i class="fas fa-trash-alt"></i> Delete
+            <i class="fas fa-trash-alt"></i> Nonaktifkan
           </button>
         </div>
       `;
@@ -153,7 +148,8 @@ function showUserDetailModal(userId) {
 
 function restoreUser(id) {
   fetch(`/admin/user/${id}/restore`, { method: "POST" })
-    .then(res => res.ok ? alert("User berhasil dipulihkan!") : alert("Gagal restore."));
+    .then(res => res.ok ? alert("Pengguna berhasil dipulihkan!") : alert("Gagal memulihkan."))
+    .catch(error => console.error('Error:', error));
 }
 
 function backupUser(id) {
@@ -165,13 +161,15 @@ function backupUser(id) {
       link.href = URL.createObjectURL(blob);
       link.download = `backup_user_${id}.json`;
       link.click();
-    });
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 function deleteUser(id) {
-  if (!confirm("Yakin ingin menonaktifkan user ini?")) return;
+  if (!confirm("Yakin ingin menonaktifkan pengguna ini?")) return;
   fetch(`/admin/user/${id}/delete`, { method: "POST" })
-    .then(res => res.ok ? alert("User dinonaktifkan.") : alert("Gagal menghapus."));
+    .then(res => res.ok ? alert("Pengguna dinonaktifkan.") : alert("Gagal menonaktifkan."))
+    .catch(error => console.error('Error:', error));
 }
 
 function loadLog() {
@@ -194,20 +192,47 @@ function loadLog() {
           <span class="text-muted">${l.user} (${l.ip})</span>
         </div>
       `).join("");
-    });
-
-  modal.show();
+    })
+    .catch(error => console.error('Error:', error));
 }
 </script>
 
 <style>
+  /* Menyesuaikan variabel Bootstrap untuk warna spesifik */
+  :root {
+    --bs-primary-rgb: 126, 63, 242; /* Warna keunguan untuk 'Pengguna' */
+    --bs-warning-rgb: 255, 172, 59; /* Warna oranye kekuningan untuk 'Log Aktivitas' */
+    /* Anda bisa menambahkan variabel warna lain di sini jika diperlukan untuk kartu di masa mendatang */
+  }
+
+  /* Menggunakan gradien untuk warna latar belakang kartu */
+  .bg-gradient-primary {
+    background: linear-gradient(45deg, rgba(var(--bs-primary-rgb), 1) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+  }
+
+  .bg-gradient-warning {
+    background: linear-gradient(45deg, rgba(var(--bs-warning-rgb), 1) 0%, rgba(var(--bs-warning-rgb), 0.7) 100%);
+  }
+
+  /* Efek transisi dan bayangan saat hover */
   .transition-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .transition-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(126, 63, 242, 0.2);
   }
+
+  /* Bayangan hover spesifik untuk kartu pengguna */
+  .custom-card-pengguna:hover {
+    box-shadow: 0 6px 14px rgba(var(--bs-primary-rgb), 0.2);
+  }
+
+  /* Bayangan hover spesifik untuk kartu log aktivitas */
+  .custom-card-log:hover {
+    box-shadow: 0 6px 14px rgba(var(--bs-warning-rgb), 0.2);
+  }
+
+  /* Styling modal */
   .modal.fade .modal-dialog {
     transform: scale(0.95);
     opacity: 0;
