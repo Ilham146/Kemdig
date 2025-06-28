@@ -267,14 +267,13 @@ def logout():
 def settings():
     if not g.user: return redirect("/login-page")
     if request.method == "POST":
-        name = request.form["name"].strip()
         email = request.form["email"].strip().lower()
         current_password = request.form["current_password"]
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
 
-        if not name or not email:
-            flash("Nama dan email tidak boleh kosong."); return redirect("/settings")
+        if not email:
+            flash("Email tidak boleh kosong."); return redirect("/settings")
         if "@" not in email:
             flash("Format email tidak valid."); return redirect("/settings")
 
@@ -287,7 +286,6 @@ def settings():
                 flash("Konfirmasi password tidak cocok."); return redirect("/settings")
             g.user.password = generate_password_hash(new_password)
 
-        g.user.name = name
         g.user.email = email
         db.session.commit()
         catat_log("Update profil dasar")
