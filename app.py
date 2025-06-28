@@ -141,7 +141,10 @@ def catat_log(aksi):
 def home():
     if not g.user:
         return redirect("/login-page")
-    notes = Note.query.filter_by(user_id=g.user.id).order_by(Note.timestamp.desc()).all()
+    notes = Note.query.filter_by(
+        user_id=g.user.id,
+        is_deleted=False
+    ).order_by(Note.timestamp.desc()).all()
 
     for note in notes:
         try:
@@ -154,34 +157,44 @@ def home():
     return render_template("view.html", notes=notes)
 
 
+
+
 @app.route("/add", methods=["GET", "POST"])
 def add_note():
     if not g.user:
         return redirect("/login-page")
-    if request.method == "POST":
-        title_raw = request.form["title"]
-        description_raw = request.form["description"]
-        category = request.form.get("category")
-        media_file = request.files.get("media")
 
-        title = cipher.encrypt(title_raw.encode()).decode()
+    if request.method == "POST":
+        title_raw       = request.form["title"]
+        description_raw = request.form["description"]
+        category        = request.form.get("category")
+        media_file      = request.files.get("media")
+
+        # Enkripsi judul dan deskripsi
+        title       = cipher.encrypt(title_raw.encode()).decode()
         description = cipher.encrypt(description_raw.encode()).decode()
 
+        # Proses upload media (jika ada)
         filename = None
         if media_file and media_file.filename != "":
             filename = secure_filename(media_file.filename)
             media_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-        db.session.add(Note(
-            title=title, description=description,
-            category=category, media=filename,
+        # Tambah catatan ke database
+        note = Note(
+            title=title,
+            description=description,
+            category=category,
+            media=filename,
             user_id=g.user.id
-        ))
+        )
         db.session.add(note)
         db.session.commit()
+
         catat_log("Menambahkan catatan terenkripsi")
-        flash("Catatan berhasil ditambahkan.")
+        flash("Catatan berhasil ditambahkan.", "success")
         return redirect("/")
+
     return render_template("add.html")
 
 
@@ -214,18 +227,30 @@ def soft_delete_note(id):
     note.deleted_at = datetime.utcnow()
     db.session.commit()
     catat_log("Soft delete catatan")
-    flash("Catatan dipindahkan ke Recently Deleted.")
+    flash("Catatan dipindahkan ke Recently Deleted.", "warning")
     return redirect("/")
+
 
 @app.route("/deleted")
 def recently_deleted():
     if not g.user:
         return redirect("/login-page")
+
     notes = Note.query.filter_by(
         user_id=g.user.id,
         is_deleted=True
     ).order_by(Note.deleted_at.desc()).all()
+
+    for note in notes:
+        try:
+            note.title = cipher.decrypt(note.title.encode()).decode()
+            note.description = cipher.decrypt(note.description.encode()).decode()
+        except:
+            note.title = "[DEKRIPSI GAGAL]"
+            note.description = "[DEKRIPSI GAGAL]"
+
     return render_template("deleted.html", notes=notes)
+
 
 @app.route("/restore/<int:id>")
 def restore_note(id):
@@ -236,7 +261,7 @@ def restore_note(id):
     note.deleted_at = None
     db.session.commit()
     catat_log("Memulihkan catatan")
-    flash("Catatan dipulihkan.")
+    flash("Catatan dipulihkan.", "success")
     return redirect("/deleted")
 
 @app.route("/destroy/<int:id>")
@@ -246,9 +271,10 @@ def destroy_note(id):
         return redirect("/")
     db.session.delete(note)
     db.session.commit()
-    catat_log("Hapus permanen catatan")
-    flash("Catatan dihapus permanen.")
+    catat_log("Menghapus permanen catatan")
+    flash("Catatan dihapus permanen.", "danger")
     return redirect("/deleted")
+
 
 # ── AUTHENTICATION ─────────────────────────────────────────────────────────────
 @app.route("/login-page")
