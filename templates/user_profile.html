@@ -117,24 +117,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <!-- 1) Upload Cover Photo -->
-        <h6>1. Upload Cover Photo</h6>
-        <form method="POST" enctype="multipart/form-data" class="mb-3">
-          <input type="hidden" name="form_type" value="cover">
-          <input
-            type="file"
-            name="cover_photo"
-            class="form-control mb-2"
-            accept="image/*"
-            required>
-          <button class="btn btn-outline-secondary btn-sm">
-            Upload Cover
-          </button>
-        </form>
-        <hr>
 
-        <!-- 2) Upload Avatar -->
-        <h6>2. Upload Avatar</h6>
+        <h6>1. Upload Avatar</h6>
         <form method="POST" enctype="multipart/form-data" class="mb-3">
           <input type="hidden" name="form_type" value="avatar">
           <input
@@ -149,8 +133,7 @@
         </form>
         <hr>
 
-        <!-- 3) Edit Biodata -->
-        <h6>3. Edit Biodata</h6>
+        <h6>2. Edit Biodata</h6>
         <form method="POST">
           <input type="hidden" name="form_type" value="bio">
           <div class="row g-3">

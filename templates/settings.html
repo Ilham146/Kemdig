@@ -3,13 +3,7 @@
 <div class="container">
   <div class="bg-white shadow-sm p-4 rounded mx-auto" style="max-width: 600px;">
     <h4 class="mb-4 fw-bold">Pengaturan Akun</h4>
-    <form method="POST" action="/settings">
-      
-      <!-- Nama -->
-      <div class="mb-3">
-        <label for="name" class="form-label">Nama Lengkap</label>
-        <input type="text" name="name" id="name" class="form-control" value="{{ user.name }}" required>
-      </div>
+    <form method="POST" action="/settings" enctype="multipart/form-data">
 
       <!-- Email -->
       <div class="mb-3">

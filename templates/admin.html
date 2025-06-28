@@ -21,8 +21,6 @@
       </button>
     </div>
 
-  
-
     <!-- TILE: Log Aktivitas -->
     <div class="col-md-4">
       <button class="btn p-0 border-0 w-100 text-start" onclick="loadLog()" style="all: unset; cursor: pointer;">
@@ -71,7 +69,6 @@
   </div>
 </div>
 
-
 <!-- MODAL: Log Aktivitas -->
 <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -91,84 +88,34 @@
 
 {% block script %}
 <script>
-  function loadUserList() {
-    const modal = new bootstrap.Modal(document.getElementById('userListModal'));
-    const target = document.getElementById('userListContent');
-    target.innerHTML = '<div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>';
+function loadUserList() {
+  const modal = new bootstrap.Modal(document.getElementById('userListModal'));
+  const target = document.getElementById('userListContent');
+  target.innerHTML = '<div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>';
 
-    fetch('/admin/user/json/all')
-      .then(res => res.json())
-      .then(data => {
-        if (!data.users.length) {
-          target.innerHTML = "<p class='text-center text-muted'>Belum ada pengguna.</p>";
-          return;
-        }
-        target.innerHTML = `
-          <div class="list-group">
-            ${data.users.map(u => `
-              <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id})" style="cursor: pointer">
-                <strong>${u.name}</strong><br>
-                <small class="text-muted">${u.email}</small>
-              </div>
-            `).join("")}
-          </div>
-        `;
-      });
+  fetch('/admin/user/json/all')
+    .then(res => res.json())
+    .then(data => {
+      if (!data.users.length) {
+        target.innerHTML = "<p class='text-center text-muted'>Belum ada pengguna.</p>";
+        return;
+      }
+      target.innerHTML = `
+        <div class="list-group">
+          ${data.users.map(u => `
+            <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id})" style="cursor: pointer">
+              <strong>${u.name}</strong><br>
+              <small class="text-muted">${u.email}</small>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    });
 
-    modal.show();
-  }
-  
+  modal.show();
+}
 
-  function showUserDetailModal(userId) {
-    const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
-    document.getElementById("userDetailContent").innerHTML = '<div class="text-center">Memuat data...</div>';
-
-    fetch(`/admin/user/json/${userId}`)
-      .then(res => res.json())
-      .then(user => {
-        const html = `
-          <div class="text-center mb-3">
-            <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
-                 class="rounded-circle mb-2" alt="Avatar">
-            <h5 class="fw-bold mb-0">${user.name}</h5>
-            <div class="text-muted small">${user.email}</div>
-          </div>
-          <hr />
-          <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
-          <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
-        `;
-        document.getElementById("userDetailContent").innerHTML = html;
-      });
-
-    modal.show();
-  }
-
-  function loadLog() {
-    const modal = new bootstrap.Modal(document.getElementById('logModal'));
-    const target = document.getElementById('logContent');
-    target.innerHTML = "<div class='text-center text-muted py-3'>Memuat log aktivitas...</div>";
-
-    fetch("/admin/log/json")
-      .then(res => res.json())
-      .then(data => {
-        const logs = data.logs;
-        if (!logs.length) {
-          target.innerHTML = "<p class='text-center text-muted'>Tidak ada log aktivitas.</p>";
-          return;
-        }
-        target.innerHTML = logs.map(l => `
-          <div class="border-bottom py-2 small">
-            <span class="text-primary fw-semibold">${l.waktu}</span> →
-            <strong>${l.aksi}</strong> oleh
-            <span class="text-muted">${l.user} (${l.ip})</span>
-          </div>
-        `).join("");
-      });
-
-    modal.show();
-  }
-
-  function showUserDetailModal(userId) {
+function showUserDetailModal(userId) {
   const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
   const target = document.getElementById("userDetailContent");
   target.innerHTML = '<div class="text-center py-3 text-muted">Memuat data pengguna...</div>';
@@ -176,10 +123,10 @@
   fetch(`/admin/user/json/${userId}`)
     .then(res => res.json())
     .then(user => {
+      const photo = user.profile_photo ? `/static/uploads/${user.profile_photo}` : '/static/uploads/default-avatar.png';
       target.innerHTML = `
         <div class="text-center mb-3">
-          <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
-               class="rounded-circle mb-2" alt="Avatar">
+          <img src="${photo}" class="rounded-circle mb-2" width="100" height="100" style="object-fit: cover;" alt="Foto Profil">
           <h5 class="fw-bold mb-0">${user.name}</h5>
           <div class="text-muted small">${user.email}</div>
         </div>
@@ -225,6 +172,31 @@ function deleteUser(id) {
   if (!confirm("Yakin ingin menonaktifkan user ini?")) return;
   fetch(`/admin/user/${id}/delete`, { method: "POST" })
     .then(res => res.ok ? alert("User dinonaktifkan.") : alert("Gagal menghapus."));
+}
+
+function loadLog() {
+  const modal = new bootstrap.Modal(document.getElementById('logModal'));
+  const target = document.getElementById('logContent');
+  target.innerHTML = "<div class='text-center text-muted py-3'>Memuat log aktivitas...</div>";
+
+  fetch("/admin/log/json")
+    .then(res => res.json())
+    .then(data => {
+      const logs = data.logs;
+      if (!logs.length) {
+        target.innerHTML = "<p class='text-center text-muted'>Tidak ada log aktivitas.</p>";
+        return;
+      }
+      target.innerHTML = logs.map(l => `
+        <div class="border-bottom py-2 small">
+          <span class="text-primary fw-semibold">${l.waktu}</span> →
+          <strong>${l.aksi}</strong> oleh
+          <span class="text-muted">${l.user} (${l.ip})</span>
+        </div>
+      `).join("");
+    });
+
+  modal.show();
 }
 </script>
 

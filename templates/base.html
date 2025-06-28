@@ -92,26 +92,14 @@
       z-index: 1055;
     }
 
-    .bg-gradient-primary {
-      background: linear-gradient(135deg, #7e3ff2, #a470f5);
-    }
-
-    .bg-gradient-success {
-      background: linear-gradient(135deg, #198754, #4fd497);
-    }
-
-    .bg-gradient-warning {
-      background: linear-gradient(135deg, #f6c23e, #ffd670);
-    }
-
     .modal-content {
-  animation: fadeInPop 0.3s ease;
-}
+      animation: fadeInPop 0.3s ease;
+    }
 
-@keyframes fadeInPop {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
-}
+    @keyframes fadeInPop {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -133,11 +121,19 @@
           {% if user %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
-              <img src="https://ui-avatars.com/api/?name={{ user.name }}&background=7e3ff2&color=fff&size=32" class="rounded-avatar" />
+              {% if user.profile_photo %}
+                <img src="{{ url_for('static', filename='uploads/' + user.profile_photo) }}" class="rounded-avatar" />
+              {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.name }}&background=7e3ff2&color=fff&size=32" class="rounded-avatar" />
+              {% endif %}
             </a>
             <div class="dropdown-menu dropdown-menu-end p-4 shadow rounded border-0" style="min-width: 260px;">
               <div class="text-center">
-                <img src="https://ui-avatars.com/api/?name={{ user.name }}&background=7e3ff2&color=fff&size=80" class="rounded-circle mb-3" />
+                {% if user.profile_photo %}
+                  <img src="{{ url_for('static', filename='uploads/' + user.profile_photo) }}" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;" />
+                {% else %}
+                  <img src="https://ui-avatars.com/api/?name={{ user.name }}&background=7e3ff2&color=fff&size=80" class="rounded-circle mb-3" />
+                {% endif %}
                 <div class="text-muted small mb-1">{{ user.email }}</div>
                 <div class="fw-semibold mb-2">Halo, {{ user.name }}!</div>
                 <a href="/settings" class="btn btn-outline-secondary btn-sm w-100 mb-2">⚙ Pengaturan</a>
