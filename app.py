@@ -5,7 +5,10 @@ from flask import Flask, render_template, request, redirect, session, flash, g, 
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from flask import abort
+from cryptography.fernet import Fernet
+
+SECRET_KEY = b'N7JdUOx_E24A81gK5J3dGZgPMZ0XBRFntn2U20r80aM='
+cipher = Fernet(SECRET_KEY)
 
 
 # ── AUTOMATIC COLUMN MIGRATION FOR EXISTING DB ─────────────────────────────────
@@ -90,6 +93,7 @@ class User(db.Model):
     notes      = db.relationship("Note", backref="author", lazy=True)
     logs       = db.relationship("LogAktivitas", backref="user", lazy=True)
 
+
 class Note(db.Model):
     __tablename__ = "note"
     id          = db.Column(db.Integer, primary_key=True)
@@ -137,35 +141,49 @@ def catat_log(aksi):
 def home():
     if not g.user:
         return redirect("/login-page")
-    notes = Note.query.filter_by(
-        user_id=g.user.id,
-        is_deleted=False
-    ).order_by(Note.timestamp.desc()).all()
+    notes = Note.query.filter_by(user_id=g.user.id).order_by(Note.timestamp.desc()).all()
+
+    for note in notes:
+        try:
+            note.title = cipher.decrypt(note.title.encode()).decode()
+            note.description = cipher.decrypt(note.description.encode()).decode()
+        except:
+            note.title = "[DEKRIPSI GAGAL]"
+            note.description = "[DEKRIPSI GAGAL]"
+
     return render_template("view.html", notes=notes)
+
 
 @app.route("/add", methods=["GET", "POST"])
 def add_note():
     if not g.user:
         return redirect("/login-page")
     if request.method == "POST":
-        file = request.files.get("media")
-        fname = None
-        if file and file.filename:
-            fname = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], fname))
-        note = Note(
-            title=request.form["title"],
-            description=request.form["description"],
-            category=request.form.get("category"),
-            media=fname,
+        title_raw = request.form["title"]
+        description_raw = request.form["description"]
+        category = request.form.get("category")
+        media_file = request.files.get("media")
+
+        title = cipher.encrypt(title_raw.encode()).decode()
+        description = cipher.encrypt(description_raw.encode()).decode()
+
+        filename = None
+        if media_file and media_file.filename != "":
+            filename = secure_filename(media_file.filename)
+            media_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+
+        db.session.add(Note(
+            title=title, description=description,
+            category=category, media=filename,
             user_id=g.user.id
-        )
+        ))
         db.session.add(note)
         db.session.commit()
-        catat_log("Menambahkan catatan")
+        catat_log("Menambahkan catatan terenkripsi")
         flash("Catatan berhasil ditambahkan.")
         return redirect("/")
     return render_template("add.html")
+
 
 @app.route("/update/<int:id>", methods=["GET", "POST"])
 def update_note(id):
@@ -284,6 +302,60 @@ def logout():
 def settings():
     if not g.user:
         return redirect("/login-page")
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        email = request.form["email"].strip().lower()
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        # Validasi dasar
+        if not name or not email:
+            flash("Nama dan email tidak boleh kosong.")
+            return redirect("/settings")
+
+        # Validasi email sederhana
+        if "@" not in email or "." not in email:
+            flash("Format email tidak valid.")
+            return redirect("/settings")
+
+        # Cek jika user ingin ganti password
+        if new_password or confirm_password:
+            # Wajib isi password lama
+            if not current_password:
+                flash("Harap masukkan password saat ini untuk mengganti password.")
+                return redirect("/settings")
+
+            # Verifikasi password lama
+            if not check_password_hash(g.user.password, current_password):
+                flash("Password saat ini salah.")
+                return redirect("/settings")
+
+            # Minimal panjang password baru
+            if len(new_password) < 8:
+                flash("Password baru harus minimal 8 karakter.")
+                return redirect("/settings")
+
+            # Konfirmasi password
+            if new_password != confirm_password:
+                flash("Password baru dan konfirmasi tidak cocok.")
+                return redirect("/settings")
+
+            # Set password baru
+            g.user.password = generate_password_hash(new_password)
+
+        # Update data dasar
+        g.user.name = name
+        g.user.email = email
+
+        db.session.commit()
+        catat_log("Memperbarui profil")
+        flash("Profil berhasil diperbarui.")
+        return redirect("/settings")
+
+    return render_template("settings.html", user=g.user)
+
 
     if request.method == "POST":
         g.user.name  = request.form["name"]

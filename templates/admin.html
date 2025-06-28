@@ -1,112 +1,31 @@
-<!-- templates/admin.html -->
 {% extends "base.html" %}
-
-{% block head %}
-<style>
-  /* Sidebar styling */
-  .sidebar {
-    position: fixed;
-    top: 70px;           /* match navbar height */
-    left: 0;
-    width: 220px;
-    height: calc(100vh - 70px);
-    background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    padding-top: 1rem;
-  }
-  .sidebar .nav-link {
-    color: #333;
-    padding: .75rem 1rem;
-  }
-  .sidebar .nav-link.active {
-    background: #e9ecef;
-    font-weight: 600;
-  }
-  /* Main content offset */
-  .main-content {
-    margin-left: 220px;
-    padding-top: 70px;
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-  /* Card hover */
-  .transition-card {
-    transition: transform .2s, box-shadow .2s;
-  }
-  .transition-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="/">Tickie</a>
-    <button class="navbar-toggler" type="button"
-            data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false"
-            aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
 
-<div class="sidebar">
-  <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link" href="/admin">
-        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="/profile">
-        <i class="fas fa-user me-2"></i>User
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="loadUserList()">
-        <i class="fas fa-users me-2"></i>Manage Users
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="loadLog()">
-        <i class="fas fa-file-alt me-2"></i>Log Aktivitas
-      </a>
-    </li>
-  </ul>
-</div>
-
-<div class="main-content">
+<div class="container py-4">
   <h4 class="fw-bold mb-4">🛠️ Admin Panel</h4>
 
-  <div class="row g-4 mb-5">
-    <!-- TILE Pengguna -->
+  <div class="row g-4">
+    <!-- TILE: Pengguna -->
     <div class="col-md-4">
-      <button class="btn p-0 w-100 text-start" onclick="loadUserList()" style="all: unset; cursor: pointer;">
+      <button class="btn p-0 border-0 w-100 text-start" onclick="loadUserList()" style="all: unset; cursor: pointer;">
         <div class="card bg-gradient-primary text-white shadow-sm border-0 transition-card">
           <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-              <div class="text-uppercase small mb-1 fw-semibold">Pengguna Aktif</div>
+              <div class="text-uppercase small mb-1 fw-semibold">Pengguna</div>
               <h2 class="mb-0">{{ user_count }}</h2>
             </div>
             <i class="fas fa-users fa-2x opacity-75"></i>
           </div>
-          <div class="card-footer text-white-50 small text-end border-0">
-            Lihat daftar pengguna →
-          </div>
+          <div class="card-footer text-white-50 small text-end border-0">Lihat daftar pengguna →</div>
         </div>
       </button>
     </div>
-    <!-- TILE Log -->
+
+  
+
+    <!-- TILE: Log Aktivitas -->
     <div class="col-md-4">
-      <button class="btn p-0 w-100 text-start" onclick="loadLog()" style="all: unset; cursor: pointer;">
+      <button class="btn p-0 border-0 w-100 text-start" onclick="loadLog()" style="all: unset; cursor: pointer;">
         <div class="card bg-gradient-warning text-white shadow-sm border-0 transition-card">
           <div class="card-body d-flex justify-content-between align-items-center">
             <div>
@@ -115,171 +34,220 @@
             </div>
             <i class="fas fa-file-alt fa-2x opacity-75"></i>
           </div>
-          <div class="card-footer text-white-50 small text-end border-0">
-            Lihat log →
-          </div>
+          <div class="card-footer text-white-50 small text-end border-0">Lihat riwayat login & aksi →</div>
         </div>
       </button>
     </div>
   </div>
+</div>
 
-  <!-- modals -->
-  <!-- User List Modal -->
-  <div class="modal fade" id="userListModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <div class="modal-header">
-          <h5 class="modal-title">📋 Daftar Pengguna</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" id="userListContent">
-          <div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>
-        </div>
+<!-- MODAL: Daftar Pengguna -->
+<div class="modal fade" id="userListModal" tabindex="-1" aria-labelledby="userListLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userListLabel">📋 Daftar Pengguna</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-    </div>
-  </div>
-
-  <!-- User Detail Modal -->
-  <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <div class="modal-header">
-          <h5 class="modal-title">Detail Pengguna</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" id="userDetailContent">
-          <div class="text-center py-3 text-muted">Memuat data pengguna...</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Log Modal -->
-  <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <div class="modal-header">
-          <h5 class="modal-title">📒 Log Aktivitas</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" id="logContent">
-          <div class="text-center py-3 text-muted">Memuat log aktivitas...</div>
-        </div>
+      <div class="modal-body" id="userListContent">
+        <div class="text-center py-4 text-muted">Memuat data pengguna...</div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- MODAL: Detail Pengguna -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title">Detail Pengguna</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="userDetailContent">
+        <div class="text-center py-3">Memuat data...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Log Aktivitas -->
+<div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title">📒 Log Aktivitas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="logContent">
+        <div class="text-center py-3 text-muted">Memuat log...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block script %}
 <script>
   function loadUserList() {
-    const m = new bootstrap.Modal(document.getElementById('userListModal'));
+    const modal = new bootstrap.Modal(document.getElementById('userListModal'));
     const target = document.getElementById('userListContent');
-    target.innerHTML = '<div class="text-center py-4 text-muted">Memuat...</div>';
+    target.innerHTML = '<div class="text-center py-4 text-muted">Memuat daftar pengguna...</div>';
+
     fetch('/admin/user/json/all')
-      .then(r => r.json())
+      .then(res => res.json())
       .then(data => {
         if (!data.users.length) {
-          target.innerHTML = '<p class="text-center text-muted">Belum ada pengguna aktif.</p>';
+          target.innerHTML = "<p class='text-center text-muted'>Belum ada pengguna.</p>";
           return;
         }
-        target.innerHTML = '<div class="list-group">' +
-          data.users.map(u => `
-            <button class="list-group-item list-group-item-action"
-                    onclick="showUserDetailModal(${u.id})">
-              <strong>${u.name}</strong><br>
-              <small class="text-muted">${u.email}</small>
-            </button>
-          `).join('') +
-          '</div>';
+        target.innerHTML = `
+          <div class="list-group">
+            ${data.users.map(u => `
+              <div class="list-group-item list-group-item-action" onclick="showUserDetailModal(${u.id})" style="cursor: pointer">
+                <strong>${u.name}</strong><br>
+                <small class="text-muted">${u.email}</small>
+              </div>
+            `).join("")}
+          </div>
+        `;
       });
-    m.show();
-  }
 
-  function showUserDetailModal(id) {
-    const m = new bootstrap.Modal(document.getElementById('userDetailModal'));
-    const t = document.getElementById('userDetailContent');
-    t.innerHTML = '<div class="text-center py-3 text-muted">Memuat...</div>';
-    fetch(`/admin/user/json/${id}`)
-      .then(r => r.json())
+    modal.show();
+  }
+  
+
+  function showUserDetailModal(userId) {
+    const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+    document.getElementById("userDetailContent").innerHTML = '<div class="text-center">Memuat data...</div>';
+
+    fetch(`/admin/user/json/${userId}`)
+      .then(res => res.json())
       .then(user => {
-        t.innerHTML = `
+        const html = `
           <div class="text-center mb-3">
-            <img src="https://ui-avatars.com/api/?name=${user.name}&background=0d6efd&color=fff&size=100"
-                 class="rounded-circle mb-2">
+            <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
+                 class="rounded-circle mb-2" alt="Avatar">
             <h5 class="fw-bold mb-0">${user.name}</h5>
             <div class="text-muted small">${user.email}</div>
           </div>
-          <hr>
-          <p><strong>IP Address:</strong> ${user.ip_address || '–'}</p>
-          <p><strong>Info:</strong> ${user.info || '–'}</p>
-          <p><strong>Alamat:</strong> ${user.address || '–'}</p>
-          <p><strong>No. HP:</strong> ${user.phone || '–'}</p>
-          <p><strong>Mood:</strong> ${user.mood || '–'}</p>
-          <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-sm btn-outline-secondary"
-                    onclick="restoreUser(${user.id})">
-              <i class="fas fa-undo-alt"></i> Restore
-            </button>
-            <button class="btn btn-sm btn-primary"
-                    onclick="backupUser(${user.id})">
-              <i class="fas fa-cloud-download-alt"></i> Backup
-            </button>
-            <button class="btn btn-sm btn-danger"
-                    onclick="deleteUser(${user.id})">
-              <i class="fas fa-trash-alt"></i> Delete
-            </button>
-          </div>`;
+          <hr />
+          <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
+          <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
+        `;
+        document.getElementById("userDetailContent").innerHTML = html;
       });
-    m.show();
-  }
 
-  function restoreUser(id) {
-    fetch(`/admin/user/${id}/restore`, { method: 'POST' })
-      .then(r => r.ok && alert('Akun dipulihkan!'));
-  }
-
-  function backupUser(id) {
-    fetch(`/admin/user/${id}/backup`)
-      .then(r => r.json())
-      .then(data => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `backup_user_${id}.json`;
-        a.click();
-      });
-  }
-
-  function deleteUser(id) {
-    if (!confirm('Nonaktifkan akun ini?')) return;
-    fetch(`/admin/user/${id}/delete`, { method: 'POST' })
-      .then(r => r.ok && alert('Akun dinonaktifkan.'));
+    modal.show();
   }
 
   function loadLog() {
-    const m = new bootstrap.Modal(document.getElementById('logModal'));
-    const t = document.getElementById('logContent');
-    t.innerHTML = '<div class="text-center py-3 text-muted">Memuat...</div>';
-    fetch('/admin/log/json')
-      .then(r => r.json())
+    const modal = new bootstrap.Modal(document.getElementById('logModal'));
+    const target = document.getElementById('logContent');
+    target.innerHTML = "<div class='text-center text-muted py-3'>Memuat log aktivitas...</div>";
+
+    fetch("/admin/log/json")
+      .then(res => res.json())
       .then(data => {
-        if (!data.logs.length) {
-          t.innerHTML = '<p class="text-center text-muted">Tidak ada log.</p>';
+        const logs = data.logs;
+        if (!logs.length) {
+          target.innerHTML = "<p class='text-center text-muted'>Tidak ada log aktivitas.</p>";
           return;
         }
-        t.innerHTML = `
-          <ul class="list-group">
-            ${data.logs.map(l => `
-              <li class="list-group-item">
-                <div><strong>[${l.waktu}]</strong> ${l.aksi}</div>
-                <small class="text-muted">User: ${l.user} — IP: ${l.ip}</small>
-              </li>
-            `).join('')}
-          </ul>`;
+        target.innerHTML = logs.map(l => `
+          <div class="border-bottom py-2 small">
+            <span class="text-primary fw-semibold">${l.waktu}</span> →
+            <strong>${l.aksi}</strong> oleh
+            <span class="text-muted">${l.user} (${l.ip})</span>
+          </div>
+        `).join("");
       });
-    m.show();
+
+    modal.show();
   }
+
+  function showUserDetailModal(userId) {
+  const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+  const target = document.getElementById("userDetailContent");
+  target.innerHTML = '<div class="text-center py-3 text-muted">Memuat data pengguna...</div>';
+
+  fetch(`/admin/user/json/${userId}`)
+    .then(res => res.json())
+    .then(user => {
+      target.innerHTML = `
+        <div class="text-center mb-3">
+          <img src="https://ui-avatars.com/api/?name=${user.name}&background=7e3ff2&color=fff&size=100"
+               class="rounded-circle mb-2" alt="Avatar">
+          <h5 class="fw-bold mb-0">${user.name}</h5>
+          <div class="text-muted small">${user.email}</div>
+        </div>
+        <hr />
+        <p><strong>Status Admin:</strong> ${user.is_admin ? 'Ya' : 'Tidak'}</p>
+        <p><strong>Alamat IP:</strong> ${user.ip_address || '—'}</p>
+
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-sm btn-outline-secondary" onclick="restoreUser(${user.id})">
+            <i class="fas fa-undo-alt"></i> Restore
+          </button>
+          <button class="btn btn-sm btn-primary" onclick="backupUser(${user.id})">
+            <i class="fas fa-cloud-download-alt"></i> Backup
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+            <i class="fas fa-trash-alt"></i> Delete
+          </button>
+        </div>
+      `;
+    });
+
+  modal.show();
+}
+
+function restoreUser(id) {
+  fetch(`/admin/user/${id}/restore`, { method: "POST" })
+    .then(res => res.ok ? alert("User berhasil dipulihkan!") : alert("Gagal restore."));
+}
+
+function backupUser(id) {
+  fetch(`/admin/user/${id}/backup`)
+    .then(res => res.json())
+    .then(data => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `backup_user_${id}.json`;
+      link.click();
+    });
+}
+
+function deleteUser(id) {
+  if (!confirm("Yakin ingin menonaktifkan user ini?")) return;
+  fetch(`/admin/user/${id}/delete`, { method: "POST" })
+    .then(res => res.ok ? alert("User dinonaktifkan.") : alert("Gagal menghapus."));
+}
 </script>
+
+<style>
+  .transition-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .transition-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(126, 63, 242, 0.2);
+  }
+  .modal.fade .modal-dialog {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  .modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+  }
+  .modal-backdrop.show {
+    backdrop-filter: blur(6px);
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+</style>
 {% endblock %}
